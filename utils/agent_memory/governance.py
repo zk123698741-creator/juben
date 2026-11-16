@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 _INJECTION_PATTERNS: List[Tuple[str, re.Pattern]] = [
     ("ignore_rules", re.compile(r"(忽略|无视|forget|ignore)\s*(以上|之前|所有|全部|previous|all)?\s*(规则|指令|rules|instructions)", re.I)),
     ("system_override", re.compile(r"(你现在是|you are now|act as|角色扮演为)\s*(系统|root|admin|管理员)", re.I)),
-    ("jailbreak", re.compile(r"(DAN|jailbreak|开发者模式|developer\s*mode)", re.I)),
+    ("jailbreak", re.compile(r"(\bDAN\b|\bjailbreak\b|开发者模式|\bdeveloper\s*mode\b)", re.I)),
     ("exfiltrate", re.compile(r"(输出|泄露|dump)\s*(系统提示|system\s*prompt|API\s*key|密钥)", re.I)),
 ]
 
