@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'">
+<title>连接设置</title>
+<style>
+  *{box-sizing:border-box} body{margin:24px;background:#f8fafc;color:#0f172a;font:14px system-ui}
+  h1{font-size:23px} h2{font-size:16px;margin-top:28px} p{color:#475569;line-height:1.6}
+  label{display:block;margin:12px 0} input,select{display:block;width:100%;padding:9px;margin-top:5px;border:1px solid #cbd5e1;border-radius:6px;background:white}
+  button{padding:11px 20px;border:0;border-radius:6px;background:#2563eb;color:white;cursor:pointer}
+  #status{color:#b91c1c;min-height:22px}.row{display:flex;gap:14px}.row label{flex:1}
+</style>
+<h1>连接设置</h1>
+<p>填写模型密钥后即可使用 AI 创作。设置保存在本机，保存后软件自动重启。</p>
+<form id="form">
+  <label>默认模型服务<select name="DEFAULT_MODEL_PROVIDER"><option value="deepseek">DeepSeek</option><option value="zhipu">智谱</option></select></label>
+  <label>DeepSeek API Key<input name="DEEPSEEK_API_KEY" type="password" autocomplete="off"></label>
+  <label>模型名称<input name="DEEPSEEK_MODEL"></label>
+  <label>服务地址<input name="DEEPSEEK_BASE_URL" type="url"></label>
+  <label>智谱 API Key（可选）<input name="ZHIPU_API_KEY" type="password" autocomplete="off"></label>
+  <h2>PostgreSQL（使用数据库功能时填写）</h2>
+  <p>本地作品文件无需数据库。历史会话、笔记等数据库功能需要已有的 PostgreSQL 服务及上游数据库结构。</p>
+  <div class="row"><label>主机<input name="POSTGRES_HOST"></label><label>端口<input name="POSTGRES_PORT" inputmode="numeric"></label></div>
+  <label>数据库<input name="POSTGRES_DB"></label>
+  <div class="row"><label>用户名<input name="POSTGRES_USER" autocomplete="off"></label><label>密码<input name="POSTGRES_PASSWORD" type="password" autocomplete="off"></label></div>
+  <h2>Neo4j（可选）</h2>
+  <label>连接 URI<input name="NEO4J_URI"></label>
+  <div class="row"><label>用户名<input name="NEO4J_USERNAME"></label><label>密码<input name="NEO4J_PASSWORD" type="password" autocomplete="off"></label></div>
+  <p id="status" role="status"></p><button id="save" type="submit">保存并重启</button>
+</form>
+<script src="settings.js"></script>
+</html>

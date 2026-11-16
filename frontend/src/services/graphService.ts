@@ -3,7 +3,7 @@
  * Graph Database Service
  */
 
-import { api } from './/api';
+import { api, API_BASE_URL } from './/api';
 
 // ============ 类型定义 ============
 
@@ -370,7 +370,7 @@ export class GraphService {
     }
 
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/graph/extract/file`,
+      `${API_BASE_URL}/graph/extract/file`,
       {
         method: 'POST',
         headers: {

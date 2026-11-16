@@ -7,7 +7,8 @@ import { retryWithBackoff } from './retryService';
 
 const log = createLogger('api');
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.VITE_DESKTOP === 'true' ? window.location.origin : 'http://localhost:8000');
 
 /**
  * API 客户端类 - 支持请求取消

@@ -1,0 +1,6 @@
+-r ../requirements.txt
+pyinstaller==6.16.0
+argon2-cffi==25.1.0
+# pymilvus 2.4/environs 9 use marshmallow APIs removed in version 4.
+marshmallow==3.26.1
+protobuf==4.25.8

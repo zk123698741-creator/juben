@@ -3,6 +3,7 @@
 提供统一的日志记录功能
 """
 import logging
+import os
 import sys
 from typing import Optional, Dict, Any
 from pathlib import Path
@@ -55,8 +56,8 @@ class JubenLogger:
         """设置文件处理器"""
         try:
             # 创建日志目录
-            log_dir = Path(__file__).parent.parent / "logs"
-            log_dir.mkdir(exist_ok=True)
+            log_dir = Path(os.getenv("JUBEN_LOG_DIR", str(Path(__file__).parent.parent / "logs")))
+            log_dir.mkdir(parents=True, exist_ok=True)
             
             # 创建文件处理器
             file_handler = logging.FileHandler(

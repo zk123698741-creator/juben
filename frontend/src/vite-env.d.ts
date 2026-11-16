@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
+  readonly VITE_DESKTOP?: string;
   readonly VITE_APP_TITLE?: string;
   readonly VITE_HELP_URL?: string;
   readonly VITE_GITHUB_URL?: string;
@@ -28,6 +29,12 @@ interface SpeechRecognitionEvent extends Event {
 }
 
 interface Window {
+  jubenDesktop?: {
+    getSession: () => Promise<{
+      user: import('./store/authStore').User;
+      tokens: import('./store/authStore').AuthTokens;
+    }>;
+  };
   SpeechRecognition?: new () => SpeechRecognition;
   webkitSpeechRecognition?: new () => SpeechRecognition;
 }

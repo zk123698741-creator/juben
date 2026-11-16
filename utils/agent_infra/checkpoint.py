@@ -9,6 +9,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+from urllib.parse import quote
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -62,6 +64,9 @@ class CheckpointStore:
 
     def _path(self, checkpoint_id: str) -> Path:
         safe = checkpoint_id.replace("/", "_").replace("..", "_")
+        if os.name == "nt":
+            # Preflight IDs contain colons; on NTFS these would address an ADS.
+            safe = quote(safe, safe="._-")
         return self.root / f"{safe}.json"
 
     async def save(self, checkpoint_id: str, payload: Dict[str, Any]) -> AgentCheckpoint:

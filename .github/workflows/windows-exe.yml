@@ -1,0 +1,93 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, desktop/**]
+    tags: ["desktop-v*"]
+    paths-ignore: ["pictures/**", "data/**", "**/*.md"]
+  pull_request:
+    paths: ["desktop/**", "frontend/**", "requirements.txt", ".github/workflows/windows-exe.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-exe:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      # Upstream tracks Linux-only runtime filenames containing colons.
+      # Disable index rejection, then exclude the entire runtime-data tree.
+      - name: Allow sparse index containing upstream Linux paths
+        run: git config --global core.protectNTFS false
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/data/
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: desktop/requirements-lock.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install Python dependencies
+        run: |
+          python -m pip install -r desktop/requirements-lock.txt
+          python -m pip check
+      - name: Build frontend
+        env:
+          VITE_DESKTOP: "true"
+          VITE_API_BASE_URL: ""
+        run: |
+          npx --yes pnpm@9.15.9 --dir frontend install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npx --yes pnpm@9.15.9 --dir frontend run build
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm ci
+      - name: Verify source backend
+        env:
+          JUBEN_PYTHON: python
+        run: |
+          python desktop/test_windows_checkpoint.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node desktop/check_backend.cjs
+      - name: Freeze Python backend
+        run: python -m PyInstaller --noconfirm --distpath dist/backend --workpath build/backend desktop/backend.spec
+      - name: Build desktop application
+        working-directory: desktop
+        run: npm run pack
+      - name: Verify packaged EXE and persistent data
+        working-directory: desktop
+        env:
+          JUBEN_EXE: ${{ github.workspace }}\dist\desktop\win-unpacked\Juben.exe
+          JUBEN_SCREENSHOT: ${{ github.workspace }}\dist\desktop\desktop-preview.png
+        run: npm run smoke
+      - name: Build single portable EXE
+        working-directory: desktop
+        run: npm run dist
+      - name: Verify single portable EXE
+        env:
+          JUBEN_SCREENSHOT: ${{ github.workspace }}\dist\desktop\desktop-preview.png
+        run: |
+          $env:JUBEN_EXE = (Get-ChildItem 'dist/desktop/Juben-*-Windows-x64.exe' | Select-Object -First 1).FullName
+          node desktop/portable-smoke.cjs
+      - name: Write checksums
+        run: |
+          Get-ChildItem dist/desktop/*.exe | Get-FileHash -Algorithm SHA256 | ForEach-Object {
+            "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)"
+          } | Set-Content dist/desktop/SHA256SUMS.txt -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Juben-Windows-x64
+          path: |
+            dist/desktop/*.exe
+            dist/desktop/SHA256SUMS.txt
+            dist/desktop/desktop-preview.png
+          if-no-files-found: error
+          retention-days: 30

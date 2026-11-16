@@ -1,0 +1,33 @@
+{
+  "name": "juben-desktop",
+  "version": "1.0.0",
+  "description": "剧本创作平台 Windows 桌面版",
+  "author": "Juben contributors",
+  "license": "MIT",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --win --x64 --dir",
+    "dist": "electron-builder --win portable --x64",
+    "smoke": "node smoke.cjs"
+  },
+  "devDependencies": {
+    "electron": "45.3.3",
+    "electron-builder": "26.18.0",
+    "playwright-core": "1.58.2"
+  },
+  "build": {
+    "appId": "org.juben.desktop",
+    "productName": "Juben",
+    "artifactName": "Juben-${version}-Windows-${arch}.${ext}",
+    "directories": { "output": "../dist/desktop" },
+    "files": ["*.cjs", "settings.js", "settings.html", "!smoke.cjs", "!portable-smoke.cjs", "!check_backend.cjs"],
+    "extraResources": [
+      { "from": "../dist/backend/juben-backend", "to": "backend" },
+      { "from": "../LICENSE.txt", "to": "LICENSE.txt" }
+    ],
+    "win": { "target": ["portable"], "signAndEditExecutable": false },
+    "portable": { "requestExecutionLevel": "user" }
+  }
+}
