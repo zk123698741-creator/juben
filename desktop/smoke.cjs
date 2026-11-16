@@ -58,6 +58,23 @@ const path = require('node:path');
       assert.ok(generated.body.outline.includes('自定义 API 验证大纲'));
       assert.equal(fixture.requests.length, 1);
       console.log('custom-api-frozen-backend: PASS (endpoint, key, model, outline persistence)');
+      const chat = await page.evaluate(async () => {
+        const state = JSON.parse(localStorage.getItem('auth-storage')).state;
+        const response = await fetch('/juben/chat', { method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${state.tokens.accessToken}` },
+          body: JSON.stringify({ input: '请直接回复一句测试文字，不调用工具。',
+            session_id: 'desktop-chat-regression', user_id: state.user?.id || 'desktop',
+            model_provider: 'deepseek', model: 'legacy-model' }) });
+        return { status: response.status, body: await response.text() };
+      });
+      assert.equal(chat.status, 200, chat.body);
+      const events = chat.body.split('\n').filter(line => line.startsWith('data: '))
+        .map(line => JSON.parse(line.slice(6)));
+      assert.ok(events.length > 0, 'Expected chat SSE events');
+      assert.ok(!events.some(event => event.event === 'error'), chat.body);
+      assert.ok(chat.body.includes('自定义 API 验证大纲'), chat.body);
+      assert.ok(fixture.requests.length >= 2, 'Chat must call the configured API');
+      console.log('custom-api-main-chat: PASS (actual /juben/chat, conductor, output hooks, SSE content)');
     }
     await page.goto(`${origin}/dramas`);
     await page.getByText('桌面版持久化验证', { exact: true }).first().waitFor({ timeout: 30000 });

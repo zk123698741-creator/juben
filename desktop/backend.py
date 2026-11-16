@@ -25,6 +25,10 @@ def configure_runtime() -> Path:
     data.mkdir(parents=True, exist_ok=True)
     os.chdir(data)
     load_dotenv(data / ".env", override=True)
+    # A user-selected custom model is the desktop's explicit model policy.
+    # Keep this exact; accepting every arbitrary model would hide stale routing.
+    if os.getenv("DEFAULT_MODEL_PROVIDER") == "custom" and os.getenv("CUSTOM_API_MODEL", "").strip():
+        os.environ["AGENT_EGRESS_ALLOWED_MODELS"] = os.environ["CUSTOM_API_MODEL"].strip()
     # These are desktop invariants, independent of editable provider settings.
     os.environ.update({
         "APP_ENV": "development", "AUTH_ENABLED": "false", "DEBUG": "false",

@@ -5,6 +5,18 @@ const path = require('node:path');
 const os = require('node:os');
 
 async function main() {
+  // NSIS uses a per-app registry key even when APPDATA is redirected. Never
+  // let an isolated installation test replace an existing user's installation.
+  const existing = spawnSync('powershell.exe', ['-NoProfile', '-Command',
+    "Get-ChildItem 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall','HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall','HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall' -ErrorAction SilentlyContinue | Get-ItemProperty | Where-Object { $_.DisplayName -eq 'Juben' } | Select-Object -ExpandProperty InstallLocation"],
+    { encoding: 'utf8', windowsHide: true });
+  const active = spawnSync('powershell.exe', ['-NoProfile', '-Command',
+    'Get-Process Juben -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Path'],
+    { encoding: 'utf8', windowsHide: true });
+  if ((existing.stdout || '').trim() || (active.stdout || '').trim()) {
+    console.log('installer-smoke: SKIP_EXISTING_INSTALL (use a clean Windows runner)');
+    return;
+  }
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'juben-install-check-'));
   const install = path.join(root, 'app');
   const profile = path.join(root, 'profile');
