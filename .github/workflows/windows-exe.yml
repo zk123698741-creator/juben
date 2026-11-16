@@ -58,8 +58,6 @@ jobs:
         env:
           JUBEN_PYTHON: python
         run: |
-          python desktop/test_custom_api.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python desktop/test_windows_checkpoint.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python desktop/test_custom_api.py
@@ -73,7 +71,6 @@ jobs:
       - name: Verify packaged EXE and persistent data
         working-directory: desktop
         env:
-          JUBEN_TEST_CUSTOM: "1"
           JUBEN_EXE: ${{ github.workspace }}\dist\desktop\win-unpacked\Juben.exe
           JUBEN_SCREENSHOT: ${{ github.workspace }}\dist\desktop\desktop-preview.png
           JUBEN_TEST_CUSTOM: "1"
