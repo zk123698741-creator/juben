@@ -12,6 +12,7 @@
 """
 
 import asyncio
+import os
 import time
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -79,6 +80,8 @@ class ConnectionPoolManager:
         Args:
             pool_type: 连接池类型 ('high_priority', 'normal', 'background')
         """
+        if os.getenv("JUBEN_DESKTOP_DATA") and not os.getenv("REDIS_HOST"):
+            return None
         # 先检查连接池是否已存在（无锁检查）
         if pool_type in self._redis_pools:
             self._connection_stats['redis_requests'] += 1

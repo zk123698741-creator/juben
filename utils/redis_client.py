@@ -130,6 +130,8 @@ class JubenRedisClient:
     
     async def _get_client(self):
         """获取Redis客户端"""
+        if os.getenv("JUBEN_DESKTOP_DATA") and not os.getenv("REDIS_HOST"):
+            return None
         if self._client is None:
             if self._connection_pool_manager is None:
                 self._connection_pool_manager = await get_connection_pool_manager()
@@ -449,6 +451,8 @@ class JubenRedisClient:
 # 便捷函数
 async def get_redis_client(priority: str = 'normal_priority') -> Optional[JubenRedisClient]:
     """获取Redis客户端实例"""
+    if os.getenv("JUBEN_DESKTOP_DATA") and not os.getenv("REDIS_HOST"):
+        return None
     if not REDIS_AVAILABLE:
         return None
     
