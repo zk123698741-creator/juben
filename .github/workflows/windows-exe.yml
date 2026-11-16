@@ -58,7 +58,11 @@ jobs:
         env:
           JUBEN_PYTHON: python
         run: |
+          python desktop/test_custom_api.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python desktop/test_windows_checkpoint.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python desktop/test_custom_api.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node desktop/check_backend.cjs
       - name: Freeze Python backend
@@ -69,29 +73,34 @@ jobs:
       - name: Verify packaged EXE and persistent data
         working-directory: desktop
         env:
+          JUBEN_TEST_CUSTOM: "1"
           JUBEN_EXE: ${{ github.workspace }}\dist\desktop\win-unpacked\Juben.exe
           JUBEN_SCREENSHOT: ${{ github.workspace }}\dist\desktop\desktop-preview.png
+          JUBEN_TEST_CUSTOM: "1"
+          JUBEN_SETTINGS_SCREENSHOT: ${{ github.workspace }}\dist\desktop\api-settings-preview.png
         run: npm run smoke
-      - name: Build single portable EXE
+      - name: Build installable EXE
         working-directory: desktop
         run: npm run dist
-      - name: Verify single portable EXE
+      - name: Verify installation custom API upgrade and uninstall
         env:
           JUBEN_SCREENSHOT: ${{ github.workspace }}\dist\desktop\desktop-preview.png
+          JUBEN_SETTINGS_SCREENSHOT: ${{ github.workspace }}\dist\desktop\api-settings-preview.png
         run: |
-          $env:JUBEN_EXE = (Get-ChildItem 'dist/desktop/Juben-*-Windows-x64.exe' | Select-Object -First 1).FullName
-          node desktop/portable-smoke.cjs
+          $env:JUBEN_INSTALLER = (Get-ChildItem 'dist/desktop/Juben-Setup-*-Windows-x64.exe' | Select-Object -First 1).FullName
+          node desktop/installer-smoke.cjs
       - name: Write checksums
         run: |
-          Get-ChildItem dist/desktop/*.exe | Get-FileHash -Algorithm SHA256 | ForEach-Object {
+          Get-ChildItem dist/desktop/Juben-Setup-*.exe | Get-FileHash -Algorithm SHA256 | ForEach-Object {
             "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)"
           } | Set-Content dist/desktop/SHA256SUMS.txt -Encoding utf8
       - uses: actions/upload-artifact@v4
         with:
-          name: Juben-Windows-x64
+          name: Juben-Installer-Windows-x64
           path: |
-            dist/desktop/*.exe
+            dist/desktop/Juben-Setup-*.exe
             dist/desktop/SHA256SUMS.txt
             dist/desktop/desktop-preview.png
+            dist/desktop/api-settings-preview.png
           if-no-files-found: error
           retention-days: 30
