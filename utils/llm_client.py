@@ -1233,6 +1233,12 @@ def get_llm_client(
         BaseLLMClient: LLM客户端实例
     """
     try:
+        # Desktop custom API is authoritative, including legacy agents that
+        # explicitly request a built-in provider/model.
+        if os.getenv("JUBEN_DESKTOP_DATA") and _default_llm_provider() == "custom":
+            from utils.custom_api_client import CustomAPIClient
+            return CustomAPIClient(**{k: v for k, v in kwargs.items()
+                                     if k not in ("model", "api_key", "base_url", "force_new")})
         provider = (provider or _default_llm_provider()).strip().lower()
 
         # 智谱已弃用且未配置 key：回退到默认 provider（deepseek），
@@ -1292,6 +1298,10 @@ def list_available_models(provider: Optional[str] = None) -> List[Dict[str, Any]
     Returns:
         List[Dict]: 模型列表
     """
+    if os.getenv("JUBEN_DESKTOP_DATA") and _default_llm_provider() == "custom":
+        model = os.getenv("CUSTOM_API_MODEL", "").strip()
+        return [{"name": model, "display_name": model,
+                 "description": "桌面连接设置中的自定义 API 模型", "max_tokens": 0}] if model else []
     provider = (provider or _default_llm_provider()).strip().lower()
     if provider == "deepseek":
         return [
@@ -1352,6 +1362,8 @@ def get_model_for_purpose(purpose: str) -> str:
         str: 推荐的模型名称
     """
     provider = _default_llm_provider()
+    if os.getenv("JUBEN_DESKTOP_DATA") and provider == "custom":
+        return os.getenv("CUSTOM_API_MODEL", "").strip()
     if provider == "deepseek":
         model_mapping = {
             "default": "deepseek-flash",
