@@ -6,6 +6,7 @@ const path = require('node:path');
 
 (async () => {
   const data = process.env.JUBEN_SMOKE_DATA || fs.mkdtempSync(path.join(os.tmpdir(), 'juben-ui-check-'));
+  const fixture = process.env.JUBEN_TEST_CUSTOM ? await require('./api-fixture.cjs').createAPIFixture(data) : null;
   const executablePath = process.env.JUBEN_EXE;
   const env = { ...process.env, JUBEN_SMOKE_DATA: data };
   delete env.ELECTRON_RUN_AS_NODE;
@@ -45,6 +46,19 @@ const path = require('node:path');
     assert.equal(result.status, 200);
     dramaId = result.data.drama?.id;
     assert.ok(dramaId, JSON.stringify(result));
+    if (fixture) {
+      const generated = await page.evaluate(async id => {
+        const state = JSON.parse(localStorage.getItem('auth-storage')).state;
+        const response = await fetch(`/juben/dramas/${id}/outline`, { method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${state.tokens.accessToken}` },
+          body: JSON.stringify({ premise: '自定义接口端到端验证' }) });
+        return { status: response.status, body: await response.json() };
+      }, dramaId);
+      assert.equal(generated.status, 200, JSON.stringify(generated));
+      assert.ok(generated.body.outline.includes('自定义 API 验证大纲'));
+      assert.equal(fixture.requests.length, 1);
+      console.log('custom-api-frozen-backend: PASS (endpoint, key, model, outline persistence)');
+    }
     await page.goto(`${origin}/dramas`);
     await page.getByText('桌面版持久化验证', { exact: true }).first().waitFor({ timeout: 30000 });
     await page.reload();
@@ -55,7 +69,11 @@ const path = require('node:path');
     await electron.evaluate(({ Menu }) => Menu.getApplicationMenu().items[0].submenu.items[0].click());
     const settings = await settingsPromise;
     await settings.waitForLoadState('domcontentloaded');
-    await settings.waitForFunction(() => document.querySelector('[name=DEEPSEEK_MODEL]').value === 'deepseek-flash');
+    if (fixture) {
+      await settings.waitForFunction(() => document.querySelector('[name=CUSTOM_API_MODEL]').value === 'custom-test-model');
+      assert.equal(await settings.locator('[name=DEFAULT_MODEL_PROVIDER]').inputValue(), 'custom');
+      if (process.env.JUBEN_SETTINGS_SCREENSHOT) await settings.screenshot({ path: process.env.JUBEN_SETTINGS_SCREENSHOT });
+    } else await settings.waitForFunction(() => document.querySelector('[name=DEEPSEEK_MODEL]').value === 'deepseek-flash');
     await assert.rejects(page.evaluate(() => window.jubenDesktop.getConfig()));
     await settings.close();
     assert.deepEqual(errors, []);
@@ -77,5 +95,5 @@ const path = require('node:path');
     await page.getByText('桌面版持久化验证', { exact: true }).first().waitFor({ timeout: 30000 });
     assert.ok(dramaId);
     console.log('restart-persistence: PASS; shutdown: PASS');
-  } finally { await electron.close(); }
+  } finally { await electron.close(); if (fixture) await fixture.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

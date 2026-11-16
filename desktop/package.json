@@ -1,6 +1,6 @@
 {
   "name": "juben-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "剧本创作平台 Windows 桌面版",
   "author": "Juben contributors",
   "license": "MIT",
@@ -9,7 +9,7 @@
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --win --x64 --dir",
-    "dist": "electron-builder --win portable --x64",
+    "dist": "electron-builder --win nsis --x64",
     "smoke": "node smoke.cjs"
   },
   "devDependencies": {
@@ -20,14 +20,51 @@
   "build": {
     "appId": "org.juben.desktop",
     "productName": "Juben",
-    "artifactName": "Juben-${version}-Windows-${arch}.${ext}",
-    "directories": { "output": "../dist/desktop" },
-    "files": ["*.cjs", "settings.js", "settings.html", "!smoke.cjs", "!portable-smoke.cjs", "!check_backend.cjs"],
-    "extraResources": [
-      { "from": "../dist/backend/juben-backend", "to": "backend" },
-      { "from": "../LICENSE.txt", "to": "LICENSE.txt" }
+    "artifactName": "Juben-Setup-${version}-Windows-${arch}.${ext}",
+    "directories": {
+      "output": "../dist/desktop"
+    },
+    "files": [
+      "*.cjs",
+      "settings.js",
+      "settings.html",
+      "!smoke.cjs",
+      "!portable-smoke.cjs",
+      "!check_backend.cjs",
+      "!api-fixture.cjs",
+      "!installer-smoke.cjs",
+      "!test_*.cjs"
     ],
-    "win": { "target": ["portable"], "signAndEditExecutable": false },
-    "portable": { "requestExecutionLevel": "user" }
+    "extraResources": [
+      {
+        "from": "../dist/backend/juben-backend",
+        "to": "backend"
+      },
+      {
+        "from": "../LICENSE.txt",
+        "to": "LICENSE.txt"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "shortcutName": "Juben",
+      "installerLanguages": [
+        "zh_CN",
+        "en_US"
+      ],
+      "language": "2052"
+    }
   }
 }
