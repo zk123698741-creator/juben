@@ -62,6 +62,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python desktop/test_custom_api.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python desktop/test_desktop_chat.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node desktop/check_backend.cjs
       - name: Freeze Python backend
         run: python -m PyInstaller --noconfirm --distpath dist/backend --workpath build/backend desktop/backend.spec
